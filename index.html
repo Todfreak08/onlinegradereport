@@ -17,7 +17,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 20px;
+            margin-bottom: 5px;
         }
 
         .header h1 {
@@ -29,6 +29,14 @@
         .logo {
             height: 80px;
             width: auto;
+        }
+
+        .college-name {
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #600000; /* Dark maroon color */
         }
 
         .container {
@@ -84,10 +92,17 @@
 
 <!-- Header with left and right logos and centered title -->
 <div class="header">
-    <img src="passi-city-college.jpg" alt="Left Logo" class="logo">
+    <!-- Left logo (placeholder) -->
+    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCI+PHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjRkYwMDAwIi8+PHRleHQgeD0iNDAiIHk9IjQ1IiBmb250LXNpemU9IjE2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSI+TExPR088L3RleHQ+PC9zdmc+" alt="Left Logo" class="logo">
+    
     <h1>Student Grades Sheet</h1>
-    <img src="bsit.png" alt="Right Logo" class="logo">
+    
+    <!-- Right logo (placeholder) -->
+    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCI+PHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjRkZGRjAwIi8+PHRleHQgeD0iNDAiIHk9IjQ1IiBmb250LXNpemU9IjE2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjMDAwIj5CU0lUPC90ZXh0Pjwvc3ZnPg==" alt="Right Logo" class="logo">
 </div>
+
+<!-- PASSI CITY COLLEGE under the title -->
+<p class="college-name">PASSI CITY COLLEGE</p>
 
 <div class="container">
 
@@ -151,11 +166,9 @@ function saveStudent() {
     const average = calculateAverage(s1, s2, s3, s4, s5);
 
     if (idField) {
-        // UPDATE existing student
         const index = students.findIndex(s => s.id == idField);
         students[index] = { id: idField, name, s1, s2, s3, s4, s5, average };
     } else {
-        // ADD new student (unlimited)
         const newStudent = {
             id: Date.now(),
             name,
