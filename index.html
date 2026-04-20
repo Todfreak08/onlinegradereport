@@ -1,111 +1,306 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>STUDENT GRADE REPORT</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>Student Grade Report</title>
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #fff;
-            color: black;
-            fontsize: 32px
-            padding: 20px;
-        }
+<style>
+body {
+  font-family: Cambria;
+  margin:0;
+  background:#ECE1BC;
+  display:flex;
+  flex-direction:column;
+  min-height:100vh;
+}
 
-        /* Header with two logos and centered title */
-        .header {
-            display: flex;
-            align-items: center;
-            justify-content: space-under;
-            margin-bottom: 2px;
-        }
+.header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:10px;
+  background:#B6C7D6;
+}
 
-        .header h1 {
-            flex: 1;
-            text-align: center;
-            margin: 0;
-        }
+.title { text-align:center; flex:1; }
+.title h1 { margin:0; font-size:22px; }
+.title p { margin:5px 0 0; font-size:14px; }
 
-        .logo {
-            height: 80px;
-            width: auto;
-        }
+.logo { width:60px; }
 
-        /* College name just below the title */
-        .college-name {
-            text-align: center;
-            font-weight: semibold;
-            font-size:25px;
-            margin-top: 0px;   /* minimal space from title */
-            margin-bottom: 10px; /* space before the container */
-            color: #B35656;     /* dark maroon */
-        }
+.dark { background:#121212; color:white; }
+.dark table { background:black; }
+.dark th { background:maroon; }
 
-        .container {
-            max-width: 1200px;
-            margin: auto;
-            background: #600000;
-            padding: 20px;
-            border-radius: 10px;
-        }
+.table-container { overflow-x:auto; }
 
-        input {
-            padding: 6px;
-            margin: 5px;
-            width: 120px;
-        }
+table {
+  width:100%;
+  border-collapse:collapse;
+  background:white;
+  font-size:12px;
+}
 
-        button {
-            padding: 6px 12px;
-            margin: 5px;
-            background: white;
-            color: black;
-            border: none;
-            font-weight: bold;
-            cursor: pointer;
-        }
+th,td {
+  border:1px solid #ccc;
+  padding:4px;
+  text-align:center;
+}
 
-        button:hover {
-            background: black;
-            color: white;
-        }
+th { background:#8B0000; color:white; }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            color: black;
-            margin-top: 20px;
-        }
+input { width:40px; }
 
-        th, td {
-            padding: 8px;
-            border: 1px solid #4b0000;
-            text-align: center;
-        }
+.controls { padding:10px; }
 
-        th {
-            background: #600000;
-            color: white;
-        }
-    </style>
+.search-bar { padding:10px; }
+.search-bar input { width:100%; padding:5px; }
+
+button { margin:2px; cursor:pointer; }
+
+/* FOOTER */
+.footer {
+  text-align:center;
+  padding:10px;
+  background:#B6C7D6;
+  font-size:14px;
+  margin-top:auto;
+}
+.footer #dateTime {
+  font-size:12px;
+  font-weight:normal;
+}
+
+.footer strong {
+  font-size:16px;
+}
+
+.dark .footer {
+  background:#1e1e1e;
+  color:white;
+}
+</style>
 </head>
-<body>
 
-<!-- Header with left and right logos and centered title -->
+<body id="body">
+
 <div class="header">
-    <!-- Left logo (placeholder) -->
-    <img src="passi-city-college.jpg" alt="Left Logo" class="logo">
-    
-    <h1>STUDENT GRADE REPORT</h1>
-    
-    <!-- Right logo (placeholder) -->
-    <img src="bsit.png" alt="Right Logo" class="logo">
+<img src="bsit.png" class="logo">
+<div class="title">
+<h1>STUDENT GRADE REPORT</h1>
+<p>School of Information and Communication Technology</p>
+<p>Passi City College</p>
+</div>
+<img src="slogo.png" class="logo">
 </div>
 
-<!-- PASSI CITY COLLEGE just below the title -->
-<p class="college-name">PASSI CITY COLLEGE</p>
+<div class="search-bar">
+<input id="searchInput" placeholder="Search student..." oninput="searchStudent()">
+<button onclick="toggleDark()">🌙</button>
+</div>
+
+<div class="controls">
+<input id="nameInput" placeholder="Student Name">
+<button onclick="addStudent()">Add Student</button>
+<button onclick="clearInputs()">Clear</button>
+</div>
+
+<div class="controls">
+<button onclick="addColumn('quiz')">+ Quiz</button>
+<button onclick="addColumn('lab')">+ Lab</button>
+<button onclick="addColumn('assign')">+ Assignment</button>
+<button onclick="addColumn('attend')">+ Attendance</button>
+<button onclick="addColumn('exam')">+ Exam</button>
+</div>
+
+<div class="table-container">
+<table>
+<thead id="tableHead"></thead>
+<tbody id="tableBody"></tbody>
+</table>
+</div>
+
+<!-- SIMPLE FOOTER ONLY -->
+<footer class="footer">
+  <p>©2026 Passi City College | School of Information and Communication Technology</p>
+  <p id="dateTime"></p>
+</footer>
+
+<script>
+
+let students = JSON.parse(localStorage.getItem("students")) || [];
+let structure = JSON.parse(localStorage.getItem("structure")) || {
+  quiz:2, lab:2, assign:1, attend:1, exam:1
+};
+
+function saveAll(){
+  localStorage.setItem("students", JSON.stringify(students));
+  localStorage.setItem("structure", JSON.stringify(structure));
+}
+
+function toggleDark(){
+  document.getElementById("body").classList.toggle("dark");
+}
+
+function addColumn(type){
+  structure[type]++;
+  students.forEach(s=>{
+    s[type].push({score:0, items:0});
+  });
+  saveAll();
+  renderTable();
+}
+
+function deleteColumn(type, index){
+  if(structure[type] <= 1){
+    return alert("At least 1 column required");
+  }
+
+  if(confirm("Delete column?")){
+    structure[type]--;
+    students.forEach(s=>{
+      s[type].splice(index,1);
+    });
+    saveAll();
+    renderTable();
+  }
+}
+
+function addStudent(){
+  let name = document.getElementById("nameInput").value.trim();
+  if(!name) return alert("Enter student name");
+
+  students.push({
+    name,
+    quiz:Array.from({length:structure.quiz},()=>({score:0,items:0})),
+    lab:Array.from({length:structure.lab},()=>({score:0,items:0})),
+    assign:Array.from({length:structure.assign},()=>({score:0,items:0})),
+    attend:Array.from({length:structure.attend},()=>({score:0,items:0})),
+    exam:Array.from({length:structure.exam},()=>({score:0,items:0}))
+  });
+
+  saveAll();
+  renderTable();
+  document.getElementById("nameInput").value="";
+}
+
+function clearInputs(){
+  document.getElementById("nameInput").value="";
+}
+
+function updateValue(i,type,index,field,value){
+  students[i][type][index][field] = Number(value)||0;
+  saveAll();
+  renderTable();
+}
+
+function compute(arr){
+  let total=0;
+  arr.forEach(x=>{
+    if(x.items>0){
+      total+=(x.score/x.items)*100;
+    }
+  });
+  return arr.length?total/arr.length:0;
+}
+
+function deleteStudent(i){
+  if(confirm("Delete student?")){
+    students.splice(i,1);
+    saveAll();
+    renderTable();
+  }
+}
+
+function editStudent(i){
+  let n=prompt("Name:",students[i].name);
+  if(n!==null) students[i].name=n;
+  saveAll();
+  renderTable();
+}
+
+function searchStudent(){
+  let key=document.getElementById("searchInput").value.toLowerCase();
+  let filtered=students.filter(s=>s.name.toLowerCase().includes(key));
+  renderTable(filtered);
+}
+
+function renderTable(data=students){
+
+  let head="<tr><th>Name</th>";
+
+  ["quiz","lab","assign","attend","exam"].forEach(type=>{
+    for(let i=0;i<structure[type];i++){
+      head+=`<th>${type[0].toUpperCase()}${i+1}
+      <button onclick="deleteColumn('${type}',${i})">❌</button>
+      </th>`;
+    }
+    head+=`<th>${type.toUpperCase()} AVG</th>`;
+  });
+
+  head+="<th>Final</th><th>Action</th></tr>";
+  tableHead.innerHTML=head;
+
+  let rows="";
+
+  data.forEach((s,i)=>{
+
+    let q=compute(s.quiz);
+    let l=compute(s.lab);
+    let a=compute(s.assign);
+    let at=compute(s.attend);
+    let ex=compute(s.exam);
+
+    let final=(q*0.2+l*0.3+a*0.1+at*0.1+ex*0.3).toFixed(2);
+
+    let row=`<tr><td>${s.name}</td>`;
+
+    ["quiz","lab","assign","attend","exam"].forEach(type=>{
+      s[type].forEach((v,idx)=>{
+        row+=`
+        <td>
+        <input value="${v.score}" oninput="updateValue(${i},'${type}',${idx},'score',this.value)">
+        /
+        <input value="${v.items}" oninput="updateValue(${i},'${type}',${idx},'items',this.value)">
+        </td>`;
+      });
+      row+=`<td>${compute(s[type]).toFixed(1)}</td>`;
+    });
+
+    row+=`<td>${final}</td>
+    <td>
+    <button onclick="editStudent(${i})">✏️</button>
+    <button onclick="deleteStudent(${i})">🗑️</button>
+    </td></tr>`;
+
+    rows+=row;
+  });
+
+  tableBody.innerHTML=rows;
+}
+function updateDateTime(){
+  document.getElementById("dateTime").textContent =
+  new Date().toLocaleString();
+}
+
+setInterval(updateDateTime, 1000);
+updateDateTime();
+renderTable();
+
+window.addStudent=addStudent;
+window.clearInputs=clearInputs;
+window.addColumn=addColumn;
+window.deleteColumn=deleteColumn;
+window.updateValue=updateValue;
+window.editStudent=editStudent;
+window.deleteStudent=deleteStudent;
+window.searchStudent=searchStudent;
+window.toggleDark=toggleDark;
+
+</script>
+
+</body>
+</html><p class="college-name">PASSI CITY COLLEGE</p>
 
 <div class="container">
 
