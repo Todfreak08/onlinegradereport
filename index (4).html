@@ -5,297 +5,301 @@
 <title>Student Grade Report</title>
 
 <style>
-body {
-  font-family: Cambria;
-  margin:0;
-  background:#ECE1BC;
-  display:flex;
-  flex-direction:column;
-  min-height:100vh;
-}
+body { font-family: Cambria; margin:0; background:#ECE1BC; }
 
 .header {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:10px;
-  background:#B6C7D6;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px; background:#B6C7D6;
 }
-
+.logo { width:80px; }
 .title { text-align:center; flex:1; }
-.title h1 { margin:0; font-size:22px; }
-.title p { margin:5px 0 0; font-size:14px; }
 
-.logo { width:60px; }
+.search-bar { padding:10px; }
+.search-bar input { width:60%; padding:8px; }
 
-.dark { background:#121212; color:white; }
-.dark table { background:black; }
-.dark th { background:maroon; }
+button { padding:6px 10px; cursor:pointer; }
 
-.table-container { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; background:white; }
+th { background:#8B0000; color:white; padding:8px; }
+td { padding:6px; text-align:center; border:1px solid #ccc; }
 
-table {
-  width:100%;
-  border-collapse:collapse;
+.modal {
+  display:none;
+  position:fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background:rgba(0,0,0,0.5);
+}
+.modal-content {
   background:white;
-  font-size:12px;
+  width:90%;
+  max-width:700px;
+  margin:50px auto;
+  padding:20px;
+  border-radius:10px;
 }
 
-th,td {
-  border:1px solid #ccc;
-  padding:4px;
-  text-align:center;
-}
-
-th { background:#8B0000; color:white; }
-
-input { width:40px; }
-
-.controls { padding:10px; }
-
-.search-bar { padding:5px; }
-.search-bar input { width:80%; padding:5px; }
-
-button { margin:2px; cursor:pointer; }
-
-/* FOOTER */
-.footer {
-  text-align:center;
+.card {
+  background:#f3f3f3;
   padding:10px;
-  background:#B6C7D6;
-  font-size:14px;
-  margin-top:auto;
-}
-.footer #dateTime {
-  font-size:12px;
-  font-weight:normal;
+  margin:10px 0;
+  border-radius:8px;
 }
 
-.footer strong {
-  font-size:16px;
+.score-row {
+  display:flex;
+  gap:5px;
+  margin-bottom:5px;
 }
 
-.dark .footer {
-  background:#1e1e1e;
-  color:white;
-}
+.score-row input { width:60px; }
+.percent { width:60px; }
+
+.pass { color:green; font-weight:bold; }
+.fail { color:red; font-weight:bold; }
 </style>
 </head>
 
-<body id="body">
+<body>
 
 <div class="header">
 <img src="bsit.png" class="logo">
 <div class="title">
-<h1>STUDENT GRADE REPORT</h1>
-<p>School of Information and Communication Technology</p>
-<p>Passi City College</p>
+<h2>STUDENT GRADE REPORT</h2>
+<p>School of ICT - Passi City College</p>
 </div>
 <img src="slogo.png" class="logo">
 </div>
 
 <div class="search-bar">
-<input id="searchInput" placeholder="Search student..." oninput="searchStudent()">
-<button onclick="toggleDark()">🌙</button>
+<input id="searchInput" placeholder="Search student..." oninput="renderTable()">
+<button onclick="openModal()">+ Add Student</button>
 </div>
 
-<div class="controls">
-<input id="nameInput" placeholder="Student Name">
-<button onclick="addStudent()">Add Student</button>
-<button onclick="clearInputs()">Clear</button>
-</div>
-
-<div class="controls">
-<button onclick="addColumn('quiz')">+ Quiz</button>
-<button onclick="addColumn('lab')">+ Lab</button>
-<button onclick="addColumn('assign')">+ Assignment</button>
-<button onclick="addColumn('attend')">+ Attendance</button>
-<button onclick="addColumn('exam')">+ Exam</button>
-</div>
-
-<div class="table-container">
 <table>
-<thead id="tableHead"></thead>
+<thead>
+<tr>
+<th>Name</th>
+<th>Year & Section</th>
+<th>Quiz</th>
+<th>Lab</th>
+<th>Assignment</th>
+<th>Attendance</th>
+<th>Exam</th>
+<th>Final</th>
+<th>Status</th>
+<th>Action</th>
+</tr>
+</thead>
 <tbody id="tableBody"></tbody>
 </table>
+
+<!-- MODAL -->
+<div id="modal" class="modal">
+<div class="modal-content">
+
+<h3>Add Student</h3>
+
+<input id="nameInput" placeholder="Full Name"><br><br>
+<input id="sectionInput" placeholder="Year & Section (e.g. BSIT 2A)" 
+oninput="this.value = formatSection(this.value)"><br><br>
+
+<div class="card">
+<h4>Quiz</h4>
+<div id="quizBox"></div>
+<button onclick="addRow('quiz')">+ Add Quiz</button>
+<p>Avg: <span id="quizAvg">0</span></p>
 </div>
 
-<!-- SIMPLE FOOTER ONLY -->
-<footer class="footer">
-  <p>©2026 Passi City College | School of Information and Communication Technology</p>
-  <p id="dateTime"></p>
-</footer>
+<div class="card">
+<h4>Lab</h4>
+<div id="labBox"></div>
+<button onclick="addRow('lab')">+ Add Lab</button>
+<p>Avg: <span id="labAvg">0</span></p>
+</div>
+
+<div class="card">
+<h4>Assignment</h4>
+<div id="assignBox"></div>
+<button onclick="addRow('assign')">+ Add Assignment</button>
+<p>Avg: <span id="assignAvg">0</span></p>
+</div>
+
+<div class="card">
+<h4>Attendance</h4>
+<input id="attendInput" type="number">
+</div>
+
+<div class="card">
+<h4>Exam</h4>
+<input id="examInput" type="number">
+</div>
+
+<button onclick="saveStudent()">Save</button>
+<button onclick="closeModal()">Cancel</button>
+
+</div>
+</div>
 
 <script>
 
-let students = JSON.parse(localStorage.getItem("students")) || [];
-let structure = JSON.parse(localStorage.getItem("structure")) || {
-  quiz:2, lab:2, assign:1, attend:1, exam:1
-};
+// LOAD STORAGE
+let students = JSON.parse(localStorage.getItem("students") || "[]");
 
-function saveAll(){
-  localStorage.setItem("students", JSON.stringify(students));
-  localStorage.setItem("structure", JSON.stringify(structure));
-}
+// FORMAT SECTION (AUTO BSIT 2A)
+function formatSection(value){
+  if(!value) return "";
 
-function toggleDark(){
-  document.getElementById("body").classList.toggle("dark");
-}
+  value = value.toUpperCase().replace(/\s+/g,"");
 
-function addColumn(type){
-  structure[type]++;
-  students.forEach(s=>{
-    s[type].push({score:0, items:0});
-  });
-  saveAll();
-  renderTable();
-}
+  let match = value.match(/^([A-Z]+)(\d)([A-Z])$/);
 
-function deleteColumn(type, index){
-  if(structure[type] <= 1){
-    return alert("At least 1 column required");
+  if(match){
+    return match[1] + " " + match[2] + match[3];
   }
 
-  if(confirm("Delete column?")){
-    structure[type]--;
-    students.forEach(s=>{
-      s[type].splice(index,1);
-    });
-    saveAll();
-    renderTable();
-  }
+  return value;
 }
 
-function addStudent(){
-  let name = document.getElementById("nameInput").value.trim();
-  if(!name) return alert("Enter student name");
-
-  students.push({
-    name,
-    quiz:Array.from({length:structure.quiz},()=>({score:0,items:0})),
-    lab:Array.from({length:structure.lab},()=>({score:0,items:0})),
-    assign:Array.from({length:structure.assign},()=>({score:0,items:0})),
-    attend:Array.from({length:structure.attend},()=>({score:0,items:0})),
-    exam:Array.from({length:structure.exam},()=>({score:0,items:0}))
-  });
-
-  saveAll();
-  renderTable();
-  document.getElementById("nameInput").value="";
+// MODAL
+function openModal(){
+  document.getElementById("modal").style.display="block";
+}
+function closeModal(){
+  document.getElementById("modal").style.display="none";
 }
 
-function clearInputs(){
-  document.getElementById("nameInput").value="";
+// ADD ROW
+function addRow(type){
+  let box = document.getElementById(type+"Box");
+
+  let div = document.createElement("div");
+  div.className="score-row";
+
+  div.innerHTML = `
+    <input placeholder="Score" oninput="computeAvg('${type}')">
+    <input placeholder="Items" oninput="computeAvg('${type}')">
+    <span class="percent">0%</span>
+  `;
+
+  box.appendChild(div);
 }
 
-function updateValue(i,type,index,field,value){
-  students[i][type][index][field] = Number(value)||0;
-  saveAll();
-  renderTable();
-}
-
-function compute(arr){
+// COMPUTE AVG
+function computeAvg(type){
+  let rows = document.getElementById(type+"Box").children;
   let total=0;
-  arr.forEach(x=>{
-    if(x.items>0){
-      total+=(x.score/x.items)*100;
-    }
-  });
-  return arr.length?total/arr.length:0;
-}
 
-function deleteStudent(i){
-  if(confirm("Delete student?")){
-    students.splice(i,1);
-    saveAll();
-    renderTable();
+  for(let r of rows){
+    let s = Number(r.children[0].value);
+    let i = Number(r.children[1].value);
+
+    let percent = (i>0)? (s/i*100):0;
+    r.children[2].innerText = percent.toFixed(1)+"%";
+
+    total += percent;
   }
+
+  let avg = rows.length? total/rows.length:0;
+  document.getElementById(type+"Avg").innerText = avg.toFixed(2);
 }
 
-function editStudent(i){
-  let n=prompt("Name:",students[i].name);
-  if(n!==null) students[i].name=n;
-  saveAll();
+// SAVE STUDENT
+function saveStudent(){
+
+  const name = document.getElementById("nameInput").value.trim();
+  const rawSection = document.getElementById("sectionInput").value;
+  const section = formatSection(rawSection);
+
+  if(!name){
+    alert("Please enter student name");
+    return;
+  }
+
+  let student = {
+    name: name,
+    section: section,
+    quiz: Number(document.getElementById("quizAvg").innerText),
+    lab: Number(document.getElementById("labAvg").innerText),
+    assign: Number(document.getElementById("assignAvg").innerText),
+    attend: Number(document.getElementById("attendInput").value) || 0,
+    exam: Number(document.getElementById("examInput").value) || 0
+  };
+
+  students.push(student);
+  localStorage.setItem("students", JSON.stringify(students));
+
+  clearForm();
+  closeModal();
   renderTable();
 }
 
-function searchStudent(){
-  let key=document.getElementById("searchInput").value.toLowerCase();
-  let filtered=students.filter(s=>s.name.toLowerCase().includes(key));
-  renderTable(filtered);
+// CLEAR FORM
+function clearForm(){
+  document.getElementById("nameInput").value="";
+  document.getElementById("sectionInput").value="";
+  document.getElementById("attendInput").value="";
+  document.getElementById("examInput").value="";
+
+  document.getElementById("quizBox").innerHTML="";
+  document.getElementById("labBox").innerHTML="";
+  document.getElementById("assignBox").innerHTML="";
+
+  document.getElementById("quizAvg").innerText="0";
+  document.getElementById("labAvg").innerText="0";
+  document.getElementById("assignAvg").innerText="0";
 }
 
-function renderTable(data=students){
+// RENDER TABLE
+function renderTable(){
 
-  let head="<tr><th>Name</th>";
+  let key = document.getElementById("searchInput").value.toLowerCase();
+  let rows = "";
 
-  ["quiz","lab","assign","attend","exam"].forEach(type=>{
-    for(let i=0;i<structure[type];i++){
-      head+=`<th>${type[0].toUpperCase()}${i+1}
-      <button onclick="deleteColumn('${type}',${i})">❌</button>
-      </th>`;
-    }
-    head+=`<th>${type.toUpperCase()} AVG</th>`;
+  students
+  .filter(s =>
+    s.name.toLowerCase().includes(key) ||
+    (s.section && s.section.toLowerCase().includes(key))
+  )
+  .forEach((s,i)=>{
+
+    let final = (
+      s.quiz*0.2 +
+      s.lab*0.3 +
+      s.assign*0.1 +
+      s.attend*0.1 +
+      s.exam*0.3
+    ).toFixed(2);
+
+    let status = final>=75 ? "Passed":"Failed";
+
+    rows+=`
+    <tr>
+      <td>${s.name}</td>
+      <td>${s.section || "-"}</td>
+      <td>${s.quiz}</td>
+      <td>${s.lab}</td>
+      <td>${s.assign}</td>
+      <td>${s.attend}</td>
+      <td>${s.exam}</td>
+      <td>${final}</td>
+      <td class="${status=='Passed'?'pass':'fail'}">${status}</td>
+      <td><button onclick="deleteStudent(${i})">Delete</button></td>
+    </tr>`;
   });
 
-  head+="<th>Final</th><th>Action</th></tr>";
-  tableHead.innerHTML=head;
-
-  let rows="";
-
-  data.forEach((s,i)=>{
-
-    let q=compute(s.quiz);
-    let l=compute(s.lab);
-    let a=compute(s.assign);
-    let at=compute(s.attend);
-    let ex=compute(s.exam);
-
-    let final=(q*0.2+l*0.3+a*0.1+at*0.1+ex*0.3).toFixed(2);
-
-    let row=`<tr><td>${s.name}</td>`;
-
-    ["quiz","lab","assign","attend","exam"].forEach(type=>{
-      s[type].forEach((v,idx)=>{
-        row+=`
-        <td>
-        <input value="${v.score}" oninput="updateValue(${i},'${type}',${idx},'score',this.value)">
-        /
-        <input value="${v.items}" oninput="updateValue(${i},'${type}',${idx},'items',this.value)">
-        </td>`;
-      });
-      row+=`<td>${compute(s[type]).toFixed(1)}</td>`;
-    });
-
-    row+=`<td>${final}</td>
-    <td>
-    <button onclick="editStudent(${i})">✏️</button>
-    <button onclick="deleteStudent(${i})">🗑️</button>
-    </td></tr>`;
-
-    rows+=row;
-  });
-
-  tableBody.innerHTML=rows;
-}
-function updateDateTime(){
-  document.getElementById("dateTime").textContent =
-  new Date().toLocaleString();
+  document.getElementById("tableBody").innerHTML = rows;
 }
 
-setInterval(updateDateTime, 1000);
-updateDateTime();
+// DELETE
+function deleteStudent(i){
+  students.splice(i,1);
+  localStorage.setItem("students", JSON.stringify(students));
+  renderTable();
+}
+
+// INIT
 renderTable();
-
-window.addStudent=addStudent;
-window.clearInputs=clearInputs;
-window.addColumn=addColumn;
-window.deleteColumn=deleteColumn;
-window.updateValue=updateValue;
-window.editStudent=editStudent;
-window.deleteStudent=deleteStudent;
-window.searchStudent=searchStudent;
-window.toggleDark=toggleDark;
 
 </script>
 
