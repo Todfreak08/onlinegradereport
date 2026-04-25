@@ -73,7 +73,7 @@ td { padding:6px; text-align:center; border:1px solid #ccc; }
 
 <div class="search-bar">
 <input id="searchInput" placeholder="Search student..." oninput="renderTable()">
-<button onclick="openModal()">+ Add Student</button>
+<button onclick="openAddModal()">+ Add Student</button>
 </div>
 
 <table>
@@ -98,7 +98,7 @@ td { padding:6px; text-align:center; border:1px solid #ccc; }
 <div id="modal" class="modal">
 <div class="modal-content">
 
-<h3>Add Student</h3>
+<h3 id="modalTitle">Add Student</h3>
 
 <input id="nameInput" placeholder="Full Name"><br><br>
 <input id="sectionInput" placeholder="Year & Section (e.g. BSIT 2A)" 
@@ -143,28 +143,46 @@ oninput="this.value = formatSection(this.value)"><br><br>
 
 <script>
 
-// LOAD STORAGE
 let students = JSON.parse(localStorage.getItem("students") || "[]");
+let editIndex = -1;
 
-// FORMAT SECTION (AUTO BSIT 2A)
+// FORMAT SECTION
 function formatSection(value){
   if(!value) return "";
-
   value = value.toUpperCase().replace(/\s+/g,"");
-
   let match = value.match(/^([A-Z]+)(\d)([A-Z])$/);
-
   if(match){
     return match[1] + " " + match[2] + match[3];
   }
-
   return value;
 }
 
-// MODAL
-function openModal(){
+// MODAL CONTROL
+function openAddModal(){
+  editIndex = -1;
+  document.getElementById("modalTitle").innerText = "Add Student";
+  clearForm();
   document.getElementById("modal").style.display="block";
 }
+
+function openEditModal(i){
+  editIndex = i;
+  let s = students[i];
+
+  document.getElementById("modalTitle").innerText = "Edit Student";
+
+  document.getElementById("nameInput").value = s.name;
+  document.getElementById("sectionInput").value = s.section;
+  document.getElementById("attendInput").value = s.attend;
+  document.getElementById("examInput").value = s.exam;
+
+  document.getElementById("quizAvg").innerText = s.quiz;
+  document.getElementById("labAvg").innerText = s.lab;
+  document.getElementById("assignAvg").innerText = s.assign;
+
+  document.getElementById("modal").style.display="block";
+}
+
 function closeModal(){
   document.getElementById("modal").style.display="none";
 }
@@ -185,7 +203,7 @@ function addRow(type){
   box.appendChild(div);
 }
 
-// COMPUTE AVG
+// AVG
 function computeAvg(type){
   let rows = document.getElementById(type+"Box").children;
   let total=0;
@@ -193,10 +211,8 @@ function computeAvg(type){
   for(let r of rows){
     let s = Number(r.children[0].value);
     let i = Number(r.children[1].value);
-
     let percent = (i>0)? (s/i*100):0;
     r.children[2].innerText = percent.toFixed(1)+"%";
-
     total += percent;
   }
 
@@ -204,12 +220,11 @@ function computeAvg(type){
   document.getElementById(type+"Avg").innerText = avg.toFixed(2);
 }
 
-// SAVE STUDENT
+// SAVE / UPDATE
 function saveStudent(){
 
   const name = document.getElementById("nameInput").value.trim();
-  const rawSection = document.getElementById("sectionInput").value;
-  const section = formatSection(rawSection);
+  const section = formatSection(document.getElementById("sectionInput").value);
 
   if(!name){
     alert("Please enter student name");
@@ -217,8 +232,8 @@ function saveStudent(){
   }
 
   let student = {
-    name: name,
-    section: section,
+    name,
+    section,
     quiz: Number(document.getElementById("quizAvg").innerText),
     lab: Number(document.getElementById("labAvg").innerText),
     assign: Number(document.getElementById("assignAvg").innerText),
@@ -226,7 +241,12 @@ function saveStudent(){
     exam: Number(document.getElementById("examInput").value) || 0
   };
 
-  students.push(student);
+  if(editIndex === -1){
+    students.push(student);
+  } else {
+    students[editIndex] = student;
+  }
+
   localStorage.setItem("students", JSON.stringify(students));
 
   clearForm();
@@ -250,7 +270,7 @@ function clearForm(){
   document.getElementById("assignAvg").innerText="0";
 }
 
-// RENDER TABLE
+// TABLE
 function renderTable(){
 
   let key = document.getElementById("searchInput").value.toLowerCase();
@@ -284,7 +304,10 @@ function renderTable(){
       <td>${s.exam}</td>
       <td>${final}</td>
       <td class="${status=='Passed'?'pass':'fail'}">${status}</td>
-      <td><button onclick="deleteStudent(${i})">Delete</button></td>
+      <td>
+        <button onclick="openEditModal(${i})">Edit</button>
+        <button onclick="deleteStudent(${i})">Delete</button>
+      </td>
     </tr>`;
   });
 
