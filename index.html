@@ -50,7 +50,10 @@ td { padding:6px; text-align:center; border:1px solid #ccc; }
   display:flex;
   gap:5px;
   margin-bottom:5px;
+  align-items:center;
 }
+
+.score-row strong { width:90px; }
 
 .score-row input { width:60px; }
 .percent { width:60px; }
@@ -83,7 +86,7 @@ td { padding:6px; text-align:center; border:1px solid #ccc; }
 <th>Name</th>
 <th>Year & Section</th>
 <th>Quiz(20%)</th>
-<th>Lab(30)</th>
+<th>Lab(30%)</th>
 <th>Assignment(10%)</th>
 <th>Attendance(10%)</th>
 <th>Major Exam(30%)</th>
@@ -113,7 +116,7 @@ oninput="this.value = formatSection(this.value)"><br><br>
 </div>
 
 <div class="card">
-<h4>Lab</h4>
+<h4>Laboratory</h4>
 <div id="labBox"></div>
 <button onclick="addRow('lab')">+ Add Lab</button>
 <p>Avg: <span id="labAvg">0</span></p>
@@ -147,7 +150,12 @@ oninput="this.value = formatSection(this.value)"><br><br>
 let students = JSON.parse(localStorage.getItem("students") || "[]");
 let editIndex = -1;
 
-// FORMAT SECTION
+const labels = {
+  quiz: "Quiz",
+  lab: "Lab",
+  assign: "Assignment"
+};
+
 function formatSection(value){
   if(!value) return "";
   value = value.toUpperCase().replace(/\s+/g,"");
@@ -158,11 +166,11 @@ function formatSection(value){
   return value;
 }
 
-// MODAL CONTROL
 function openAddModal(){
   editIndex = -1;
   document.getElementById("modalTitle").innerText = "Add Student";
   clearForm();
+  initDefaultRows();
   document.getElementById("modal").style.display="block";
 }
 
@@ -170,16 +178,21 @@ function openEditModal(i){
   editIndex = i;
   let s = students[i];
 
-  document.getElementById("modalTitle").innerText = "Edit Student";
+  clearForm();
 
+  document.getElementById("modalTitle").innerText = "Edit Student";
   document.getElementById("nameInput").value = s.name;
   document.getElementById("sectionInput").value = s.section;
   document.getElementById("attendInput").value = s.attend;
   document.getElementById("examInput").value = s.exam;
 
-  document.getElementById("quizAvg").innerText = s.quiz;
-  document.getElementById("labAvg").innerText = s.lab;
-  document.getElementById("assignAvg").innerText = s.assign;
+  loadRows("quiz", s.quizRows);
+  loadRows("lab", s.labRows);
+  loadRows("assign", s.assignRows);
+
+  computeAvg("quiz");
+  computeAvg("lab");
+  computeAvg("assign");
 
   document.getElementById("modal").style.display="block";
 }
@@ -188,32 +201,48 @@ function closeModal(){
   document.getElementById("modal").style.display="none";
 }
 
-// ADD ROW
-function addRow(type){
+function initDefaultRows(){
+  addRow("quiz");
+  addRow("lab");
+  addRow("assign");
+}
+
+function loadRows(type, data){
+  if(!data || data.length === 0){
+    addRow(type);
+    return;
+  }
+  data.forEach(d=>{
+    addRow(type, d.score, d.items);
+  });
+}
+
+function addRow(type, score="", items=""){
   let box = document.getElementById(type+"Box");
+  let count = box.children.length + 1;
 
   let div = document.createElement("div");
   div.className="score-row";
 
   div.innerHTML = `
-    <input placeholder="Score" oninput="computeAvg('${type}')">
-    <input placeholder="Items" oninput="computeAvg('${type}')">
+    <strong>${labels[type]} ${count}</strong>
+    <input value="${score}" oninput="computeAvg('${type}')">
+    <input value="${items}" oninput="computeAvg('${type}')">
     <span class="percent">0%</span>
   `;
 
   box.appendChild(div);
 }
 
-// AVG
 function computeAvg(type){
   let rows = document.getElementById(type+"Box").children;
   let total=0;
 
   for(let r of rows){
-    let s = Number(r.children[0].value);
-    let i = Number(r.children[1].value);
+    let s = Number(r.children[1].value);
+    let i = Number(r.children[2].value);
     let percent = (i>0)? (s/i*100):0;
-    r.children[2].innerText = percent.toFixed(1)+"%";
+    r.children[3].innerText = percent.toFixed(1)+"%";
     total += percent;
   }
 
@@ -221,7 +250,19 @@ function computeAvg(type){
   document.getElementById(type+"Avg").innerText = avg.toFixed(2);
 }
 
-// SAVE / UPDATE
+function getRows(type){
+  let rows = document.getElementById(type+"Box").children;
+  let data = [];
+
+  for(let r of rows){
+    data.push({
+      score: Number(r.children[1].value)||0,
+      items: Number(r.children[2].value)||0
+    });
+  }
+  return data;
+}
+
 function saveStudent(){
 
   const name = document.getElementById("nameInput").value.trim();
@@ -239,7 +280,10 @@ function saveStudent(){
     lab: Number(document.getElementById("labAvg").innerText),
     assign: Number(document.getElementById("assignAvg").innerText),
     attend: Number(document.getElementById("attendInput").value) || 0,
-    exam: Number(document.getElementById("examInput").value) || 0
+    exam: Number(document.getElementById("examInput").value) || 0,
+    quizRows: getRows("quiz"),
+    labRows: getRows("lab"),
+    assignRows: getRows("assign")
   };
 
   if(editIndex === -1){
@@ -250,12 +294,10 @@ function saveStudent(){
 
   localStorage.setItem("students", JSON.stringify(students));
 
-  clearForm();
   closeModal();
   renderTable();
 }
 
-// CLEAR FORM
 function clearForm(){
   document.getElementById("nameInput").value="";
   document.getElementById("sectionInput").value="";
@@ -271,7 +313,6 @@ function clearForm(){
   document.getElementById("assignAvg").innerText="0";
 }
 
-// TABLE
 function renderTable(){
 
   let key = document.getElementById("searchInput").value.toLowerCase();
@@ -315,14 +356,12 @@ function renderTable(){
   document.getElementById("tableBody").innerHTML = rows;
 }
 
-// DELETE
 function deleteStudent(i){
   students.splice(i,1);
   localStorage.setItem("students", JSON.stringify(students));
   renderTable();
 }
 
-// INIT
 renderTable();
 
 </script>
